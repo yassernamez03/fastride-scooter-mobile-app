@@ -279,6 +279,40 @@ export default function SettingsScreen() {
               <ChevronRight size={20} color={colors.secondaryText} />
             </View>
           </TouchableOpacity>
+        </View>        {/* Weather Widget */}
+        <View style={[styles.section, { backgroundColor: colors.cardBackground }]}>
+          <View style={styles.sectionHeader}>
+            <CloudSun size={20} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Weather Widget
+            </Text>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={async () => {
+              try {                // Reset the widget visibility setting to make it visible again
+                await AsyncStorage.setItem('weather_widget_visible', JSON.stringify(true));
+                Alert.alert(
+                  "Weather Widget Restored", 
+                  "The weather widget is now visible on the map screen.",
+                  [{ text: "OK" }]
+                );
+              } catch (error) {
+                console.error('Error restoring widget:', error);
+                Alert.alert(
+                  "Error", 
+                  "Failed to restore weather widget. Please try again.",
+                  [{ text: "OK" }]
+                );
+              }
+            }}
+          >
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              Restore Weather Widget
+            </Text>
+            <ChevronRight size={20} color={colors.secondaryText} />
+          </TouchableOpacity>
         </View>
 
         {/* App Settings */}

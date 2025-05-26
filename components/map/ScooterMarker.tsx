@@ -3,13 +3,10 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Battery } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { Scooter } from '@/types';
+import MapView, { Marker as MapMarker } from 'react-native-maps';
 
-let Marker: any = () => null;
-
-if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  Marker = Maps.Marker;
-}
+// Define the marker component based on platform
+const Marker = Platform.OS !== 'web' ? MapMarker : (() => null as any);
 
 type ScooterMarkerProps = {
   scooter: Scooter;
