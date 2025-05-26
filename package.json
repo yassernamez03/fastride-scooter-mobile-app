@@ -7,6 +7,7 @@
     "dev": "expo start",
     "dev:no-telemetry": "powershell -Command \"$env:EXPO_NO_TELEMETRY=1; expo start\"",
     "build:web": "expo export --platform web",
+    "deploy:gh-pages": "expo export --platform web && npx gh-pages -d dist",
     "lint": "expo lint"
   },
   "dependencies": {
@@ -52,6 +53,7 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
     "babel-plugin-module-resolver": "^5.0.2",
+    "gh-pages": "^6.3.0",
     "metro-minify-terser": "^0.82.4",
     "metro-react-native-babel-transformer": "^0.77.0",
     "typescript": "~5.8.3"
