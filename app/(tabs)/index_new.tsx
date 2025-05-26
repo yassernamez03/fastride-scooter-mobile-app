@@ -111,8 +111,7 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      {MapView && (
-        <MapView
+      {MapView && (        <MapView
           style={styles.map}
           provider="google"
           customMapStyle={theme === 'dark' ? darkMapStyle : lightMapStyle}
@@ -209,11 +208,9 @@ const styles = StyleSheet.create({
   },
   markerContainer: {
     alignItems: 'center',
-  },
-  markerCircle: {
+  },  markerCircle: {
     width: 36,
-    height: 36,
-    borderRadius: 18,
+    height: 36,    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -221,8 +218,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
-  },
-  markerText: {
+  },markerText: {
     fontSize: 10,
     fontFamily: 'Poppins-SemiBold',
     marginTop: 2,
@@ -236,20 +232,17 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'column',
     gap: 12,
-  },
-  iconButton: {
+  },  iconButton: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
+    borderRadius: 24,    justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-  },
-  permissionAlert: {
+  },permissionAlert: {
     position: 'absolute',
     top: 120,
     left: 16,
@@ -295,8 +288,7 @@ const styles = StyleSheet.create({
   },
   scooterList: {
     gap: 12,
-  },
-  scooterItem: {
+  },  scooterItem: {
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000',

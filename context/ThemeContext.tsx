@@ -17,7 +17,14 @@ type ThemeColors = {
   error: string;
   errorBackground: string;
   success: string;
+  successBackground: string;
   warning: string;
+  warningBackground: string;
+  info: string;
+  infoBackground: string;
+  accent: string;
+  surface: string;
+  disabled: string;
 };
 
 type ThemeContextType = {
@@ -41,7 +48,14 @@ const lightColors: ThemeColors = {
   error: '#EF4444',
   errorBackground: '#FEE2E2',
   success: '#10B981',
+  successBackground: '#D1FAE5',
   warning: '#F59E0B',
+  warningBackground: '#FEF3C7',
+  info: '#3B82F6',
+  infoBackground: '#DBEAFE',
+  accent: '#8B5CF6',
+  surface: '#F8FAFC',
+  disabled: '#D1D5DB',
 };
 
 const darkColors: ThemeColors = {
@@ -58,7 +72,14 @@ const darkColors: ThemeColors = {
   error: '#F87171',
   errorBackground: '#7F1D1D',
   success: '#34D399',
+  successBackground: '#064E3B',
   warning: '#FBBF24',
+  warningBackground: '#78350F',
+  info: '#60A5FA',
+  infoBackground: '#1E3A8A',
+  accent: '#A78BFA',
+  surface: '#0F172A',
+  disabled: '#4B5563',
 };
 
 const ThemeContext = createContext<ThemeContextType>({

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Switch } f
 import { useTheme } from '@/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'expo-router';
 import { 
   CreditCard, 
   Settings, 
@@ -12,13 +13,15 @@ import {
   MessageCircle,
   Moon,
   ChevronRight,
-  Leaf
+  Leaf,
+  Bell
 } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const { colors, theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   
   const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
 
@@ -75,9 +78,23 @@ export default function ProfileScreen() {
       <View style={[styles.sectionContainer, { backgroundColor: colors.cardBackground }]}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
         
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/payment-methods')}
+        >
           <CreditCard size={24} color={colors.primary} style={styles.menuIcon} />
           <Text style={[styles.menuText, { color: colors.text }]}>Payment Methods</Text>
+          <ChevronRight size={20} color={colors.secondaryText} />
+        </TouchableOpacity>
+        
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/notifications')}
+        >
+          <Bell size={24} color="#3B82F6" style={styles.menuIcon} />
+          <Text style={[styles.menuText, { color: colors.text }]}>Notifications</Text>
           <ChevronRight size={20} color={colors.secondaryText} />
         </TouchableOpacity>
         
@@ -91,7 +108,10 @@ export default function ProfileScreen() {
         
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/favorites')}
+        >
           <Heart size={24} color="#EC4899" style={styles.menuIcon} />
           <Text style={[styles.menuText, { color: colors.text }]}>Favorite Locations</Text>
           <ChevronRight size={20} color={colors.secondaryText} />
@@ -114,7 +134,10 @@ export default function ProfileScreen() {
         
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/settings')}
+        >
           <Settings size={24} color={colors.secondaryText} style={styles.menuIcon} />
           <Text style={[styles.menuText, { color: colors.text }]}>Settings</Text>
           <ChevronRight size={20} color={colors.secondaryText} />

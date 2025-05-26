@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Battery } from 'lucide-react-native';
+import { useTheme } from '@/context/ThemeContext';
 import { Scooter } from '@/types';
 
 let Marker: any = () => null;
@@ -16,6 +17,8 @@ type ScooterMarkerProps = {
 };
 
 export function ScooterMarker({ scooter, onPress }: ScooterMarkerProps) {
+  const { colors } = useTheme();
+  
   if (Platform.OS === 'web') {
     return null;
   }
@@ -36,15 +39,15 @@ export function ScooterMarker({ scooter, onPress }: ScooterMarkerProps) {
       onPress={onPress}
     >
       <View style={styles.markerContainer}>
-        <View style={styles.markerTop}>
+        <View style={[styles.markerTop, { backgroundColor: colors.cardBackground }]}>
           <Battery size={12} color={getBatteryColor(scooter.batteryLevel)} />
-          <Text style={styles.batteryText}>{scooter.batteryLevel}%</Text>
+          <Text style={[styles.batteryText, { color: colors.text }]}>{scooter.batteryLevel}%</Text>
         </View>
         <View style={styles.markerPin}>
-          <View style={styles.circle}>
+          <View style={[styles.circle, { backgroundColor: colors.cardBackground }]}>
             <Text style={styles.price}>${scooter.pricePerMinute}</Text>
           </View>
-          <View style={styles.pointer} />
+          <View style={[styles.pointer, { backgroundColor: colors.cardBackground }]} />
         </View>
       </View>
     </Marker>
@@ -58,7 +61,6 @@ const styles = StyleSheet.create({
   markerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
     borderRadius: 10,
     paddingHorizontal: 4,
     paddingVertical: 2,
@@ -76,7 +78,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -93,7 +94,6 @@ const styles = StyleSheet.create({
   pointer: {
     width: 8,
     height: 8,
-    backgroundColor: 'white',
     transform: [{ rotate: '45deg' }],
     marginTop: -4,
     shadowColor: '#000',

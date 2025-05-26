@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/ThemeContext';
-import { Camera, CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { Camera, CameraView, useCameraPermissions } from 'expo-camera';
 import { BlurView } from 'expo-blur';
 import { Scan, X, ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,8 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
+
+  const styles = getStyles(colors);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (!scannedCode) {
@@ -36,10 +38,12 @@ export default function ScanScreen() {
       const result = await unlockScooter(scannedCode);
       if (result.success) {
         // Navigate to active ride screen or show success message
-        router.push({
-          pathname: '/ride',
-          params: { scooterId: result.scooterId }
-        });
+        if (router && router.push) {
+          router.push({
+            pathname: '/ride',
+            params: { scooterId: result.scooterId }
+          });
+        }
       } else {
         // Show error
         setIsUnlocking(false);
@@ -82,99 +86,107 @@ export default function ScanScreen() {
       {/* Camera view */}
       <CameraView
         style={styles.camera}
-        facing={CameraType.back}
-        barCodeScannerSettings={{
-          barCodeTypes: ['qr'],
+        facing="back"
+        barcodeScannerSettings={{
+          barcodeTypes: ['qr'],
         }}
         onBarcodeScanned={scannedCode ? undefined : handleBarCodeScanned}
-      >
-        {/* Header */}
-        <View style={[styles.header, { marginTop: insets.top }]}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => router.back()}
-          >
-            <BlurView intensity={80} tint={theme === 'dark' ? 'dark' : 'light'} style={styles.blurButton}>
-              <ChevronLeft size={24} color={colors.text} />
-            </BlurView>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Scan QR Code</Text>
-          <View style={{ width: 40 }} />
-        </View>
+      />
+      
+      {/* Overlay UI positioned absolutely over camera */}
+      {/* Header */}
+      <View style={[styles.header, { marginTop: insets.top }]}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            if (router && router.back) {
+              router.back();
+            } else {
+              // Fallback to navigate to main tab
+              router.push('/(tabs)');
+            }
+          }}
+        >
+          <BlurView intensity={80} tint={theme === 'dark' ? 'dark' : 'light'} style={styles.blurButton}>
+            <ChevronLeft size={24} color={colors.text} />
+          </BlurView>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Scan QR Code</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-        {/* Scanner UI */}
-        {!scannedCode ? (
-          <View style={styles.scannerContainer}>
-            <View style={styles.scanner}>
-              <View style={styles.cornerTL} />
-              <View style={styles.cornerTR} />
-              <View style={styles.cornerBL} />
-              <View style={styles.cornerBR} />
-            </View>
-            <Text style={styles.scannerText}>
-              Align QR code within the frame
-            </Text>
+      {/* Scanner UI */}
+      {!scannedCode ? (
+        <View style={styles.scannerContainer}>
+          <View style={styles.scanner}>
+            <View style={styles.cornerTL} />
+            <View style={styles.cornerTR} />
+            <View style={styles.cornerBL} />
+            <View style={styles.cornerBR} />
           </View>
-        ) : (
-          <BlurView 
-            intensity={90} 
-            tint={theme === 'dark' ? 'dark' : 'light'} 
-            style={styles.resultContainer}
-          >
-            <View style={styles.resultCard}>
-              <View style={styles.resultHeader}>
-                <Text style={styles.resultTitle}>Scooter Found!</Text>
-                <TouchableOpacity onPress={resetScan}>
-                  <X size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.scooterInfo}>
-                <Image 
-                  source={{ uri: 'https://images.pexels.com/photos/5061568/pexels-photo-5061568.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }} 
-                  style={styles.scooterImage} 
-                />
-                <View style={styles.scooterDetails}>
-                  <Text style={[styles.scooterName, { color: colors.text }]}>FastRide Scooter</Text>
-                  <Text style={[styles.scooterID, { color: colors.secondaryText }]}>
-                    ID: {scannedCode.substring(0, 8)}...
-                  </Text>
-                  <View style={styles.scooterStats}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statValue}>87%</Text>
-                      <Text style={styles.statLabel}>Battery</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                      <Text style={styles.statValue}>$0.15</Text>
-                      <Text style={styles.statLabel}>Per min</Text>
-                    </View>
+          <Text style={styles.scannerText}>
+            Align QR code within the frame
+          </Text>
+        </View>
+      ) : (
+        <BlurView 
+          intensity={90} 
+          tint={theme === 'dark' ? 'dark' : 'light'} 
+          style={styles.resultContainer}
+        >
+          <View style={[styles.resultCard, { backgroundColor: colors.cardBackground }]}>
+            <View style={styles.resultHeader}>
+              <Text style={[styles.resultTitle, { color: colors.text }]}>Scooter Found!</Text>
+              <TouchableOpacity onPress={resetScan}>
+                <X size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.scooterInfo}>
+              <Image 
+                source={{ uri: 'https://images.pexels.com/photos/5061568/pexels-photo-5061568.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }} 
+                style={styles.scooterImage} 
+              />
+              <View style={styles.scooterDetails}>
+                <Text style={[styles.scooterName, { color: colors.text }]}>FastRide Scooter</Text>
+                <Text style={[styles.scooterID, { color: colors.secondaryText }]}>
+                  ID: {scannedCode.substring(0, 8)}...
+                </Text>
+                <View style={styles.scooterStats}>
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statValue, { color: colors.primary }]}>87%</Text>
+                    <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Battery</Text>
+                  </View>
+                  <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statValue, { color: colors.primary }]}>$0.15</Text>
+                    <Text style={[styles.statLabel, { color: colors.secondaryText }]}>Per min</Text>
                   </View>
                 </View>
               </View>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.unlockButton, 
-                  { backgroundColor: colors.primary },
-                  isUnlocking && { opacity: 0.7 }
-                ]}
-                onPress={handleUnlock}
-                disabled={isUnlocking}
-              >
-                <Text style={styles.unlockButtonText}>
-                  {isUnlocking ? 'Unlocking...' : 'Unlock Scooter'}
-                </Text>
-              </TouchableOpacity>
             </View>
-          </BlurView>
-        )}
-      </CameraView>
+            
+            <TouchableOpacity 
+              style={[
+                styles.unlockButton, 
+                { backgroundColor: colors.primary },
+                isUnlocking && { opacity: 0.7 }
+              ]}
+              onPress={handleUnlock}
+              disabled={isUnlocking}
+            >
+              <Text style={styles.unlockButtonText}>
+                {isUnlocking ? 'Unlocking...' : 'Unlock Scooter'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </BlurView>
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -182,11 +194,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     height: 60,
+    zIndex: 10,
   },
   backButton: {
     width: 40,
@@ -209,9 +226,13 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   scannerContainer: {
-    flex: 1,
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -125 }, { translateY: -125 }],
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
   scanner: {
     width: 250,
@@ -272,13 +293,17 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   resultContainer: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+    zIndex: 10,
   },
   resultCard: {
-    backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
     width: '100%',
@@ -293,7 +318,6 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
-    color: '#2B2B2B',
   },
   scooterInfo: {
     flexDirection: 'row',
@@ -329,17 +353,14 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
-    color: '#32CD32',
   },
   statLabel: {
     fontFamily: 'Poppins-Regular',
     fontSize: 12,
-    color: '#757575',
   },
   statDivider: {
     width: 1,
     height: 24,
-    backgroundColor: '#E0E0E0',
     marginHorizontal: 16,
   },
   unlockButton: {
