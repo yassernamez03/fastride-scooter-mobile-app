@@ -13,25 +13,35 @@ export function MapHeader() {
   return (
     <View style={[styles.header, { paddingTop: insets.top }]}>
       <View style={styles.headerTop}>
-        <TouchableOpacity style={styles.menuButton}>
-          <Menu size={24} color={colors.text} />
+        <TouchableOpacity 
+          style={[styles.menuButton, { backgroundColor: colors.cardBackground }]}
+          activeOpacity={0.7}
+        >
+          <Menu size={22} color={colors.primary} />
         </TouchableOpacity>
         
-        <Text style={[styles.headerTitle, { color: colors.text }]}>FastRide</Text>
+        <View style={styles.logoContainer}>
+          <Text style={[styles.headerTitle, { color: colors.primary }]}>Fast</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Ride</Text>
+        </View>
         
         <TouchableOpacity 
-          style={styles.profileButton}
+          style={[styles.profileButton, { backgroundColor: colors.cardBackground }]}
+          activeOpacity={0.7}
           onPress={() => router.push('/profile')}
         >
-          <User size={24} color={colors.text} />
+          <User size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
       
-      <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground }]}>
-        <Search size={20} color={colors.secondaryText} style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { 
+        backgroundColor: colors.cardBackground,
+        borderColor: colors.border,
+      }]}>
+        <Search size={20} color={colors.primary} style={styles.searchIcon} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Search for a destination"
+          placeholder="Where would you like to go?"
           placeholderTextColor={colors.placeholderText}
         />
       </View>

@@ -1,0 +1,414 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  PanResponder, 
+  Dimensions, 
+  LayoutChangeEvent,
+  PanResponderInstance 
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  runOnJS 
+} from 'react-native-reanimated';
+import { useTheme } from '@/context/ThemeContext';
+import { useContext } from 'react';
+import { ToastContext } from '@/context/ToastContext';
+import { Cloud, Sun, CloudRain, Wind, Droplets, Move } from 'lucide-react-native';
+// Define toast context type to avoid TypeScript errors
+type ToastContextType = {
+  showToast: (message: string, type?: string, duration?: number) => void;
+  success: (message: string, duration?: number) => void;
+  error: (message: string, duration?: number) => void;
+  warning: (message: string, duration?: number) => void;
+  info: (message: string, duration?: number) => void;
+};
+import { getWeatherData, getWeatherRecommendation } from '@/services/weatherService';
+import { WeatherData } from '@/types';
+
+type WeatherWidgetProps = {
+  latitude?: number;
+  longitude?: number;
+  onPress?: () => void;
+};
+
+// Get and save widget position in AsyncStorage
+const POSITION_STORAGE_KEY = 'weather_widget_position';
+
+const getStoredPosition = async () => {
+  try {
+    const positionString = await AsyncStorage.getItem(POSITION_STORAGE_KEY);
+    if (positionString) {
+      return JSON.parse(positionString);
+    }
+  } catch (error) {
+    console.error('Error getting stored position:', error);
+  }
+  return null;
+};
+
+const savePosition = async (x: number, y: number) => {
+  try {
+    await AsyncStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify({ x, y }));
+  } catch (error) {
+    console.error('Error saving position:', error);
+  }
+};
+
+export function WeatherWidget({ latitude = 37.7749, longitude = -122.4194, onPress }: WeatherWidgetProps) {
+  const { colors } = useTheme();
+  const toast = useContext(ToastContext) as ToastContextType;
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isMoving, setIsMoving] = useState(false);
+  const [widgetDimensions, setWidgetDimensions] = useState({ width: 0, height: 0 });
+  const [showHint, setShowHint] = useState(true);
+  const [hasShownToast, setHasShownToast] = useState(false);
+  
+  // Get screen dimensions
+  const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
+  
+  // Animated values for position
+  const positionX = useSharedValue(screenWidth - 296); // Default position
+  const positionY = useSharedValue(100); // Default position
+  
+  // Load saved position on init
+  useEffect(() => {
+    const loadSavedPosition = async () => {
+      const savedPosition = await getStoredPosition();
+      if (savedPosition) {
+        positionX.value = savedPosition.x;
+        positionY.value = savedPosition.y;
+      }
+    };
+    
+    loadSavedPosition();
+    
+    // Show hint after a short delay
+    const hintTimer = setTimeout(() => {
+      setShowHint(false);
+    }, 3000);
+    
+    return () => clearTimeout(hintTimer);
+  }, []);
+    // We're handling toast notification in the loadWeather function instead
+  
+  useEffect(() => {
+    loadWeather();
+  }, [latitude, longitude]);
+  const loadWeather = async () => {
+    try {
+      setLoading(true);
+      const weatherData = await getWeatherData(latitude, longitude);
+      setWeather(weatherData);
+      
+      // After successfully loading weather, we can show a hint about moving the widget
+      if (!hasShownToast && weatherData) {
+        setTimeout(() => {
+          toast.info('Drag the weather widget to reposition it!', 3000);
+          setHasShownToast(true);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error loading weather:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const onLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setWidgetDimensions({ width, height });
+  };
+    // Handle drag end
+  const handleDragEnd = () => {
+    setIsMoving(false);
+    
+    // Snap to edges if near
+    const snapThreshold = 20;
+    const maxX = screenWidth - widgetDimensions.width;
+    const maxY = screenHeight - widgetDimensions.height - 80; // Account for bottom tabs
+    
+    let finalX = positionX.value;
+    let finalY = positionY.value;
+    
+    // Snap to right edge
+    if (positionX.value > maxX - snapThreshold) {
+      finalX = maxX;
+      positionX.value = withSpring(maxX);
+    }
+    
+    // Snap to left edge
+    if (positionX.value < snapThreshold) {
+      finalX = 0;
+      positionX.value = withSpring(0);
+    }
+    
+    // Ensure widget stays within vertical bounds
+    if (positionY.value < 90) { // Account for header
+      finalY = 90;
+      positionY.value = withSpring(90);
+    } else if (positionY.value > maxY) {
+      finalY = maxY;
+      positionY.value = withSpring(maxY);
+    }
+    
+    // Save position
+    savePosition(finalX, finalY);
+  };
+    // Store previous gesture values to calculate deltas
+  const prevGestureX = useRef(0);
+  const prevGestureY = useRef(0);
+  
+  // PanResponder to handle dragging
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only start responding to movement if there's significant movement
+        return Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2;
+      },
+      onPanResponderGrant: () => {
+        prevGestureX.current = 0;
+        prevGestureY.current = 0;
+        setIsMoving(true);
+        // Show toast once when user first moves the widget
+        if (!hasShownToast) {
+          toast.info('Drag to reposition the weather widget!', 2000);
+          setHasShownToast(true);
+        }
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Calculate deltas from last position to avoid jumps
+        const dx = gestureState.dx - prevGestureX.current;
+        const dy = gestureState.dy - prevGestureY.current;
+        
+        // Update positions
+        positionX.value = positionX.value + dx;
+        positionY.value = positionY.value + dy;
+        
+        // Store current gesture state for next delta calculation
+        prevGestureX.current = gestureState.dx;
+        prevGestureY.current = gestureState.dy;
+      },
+      onPanResponderRelease: () => {
+        runOnJS(handleDragEnd)();
+      },
+      onPanResponderTerminate: () => {
+        runOnJS(handleDragEnd)();
+      },
+    })
+  ).current;
+    // We're declaring animatedStyles later in the component
+  const getWeatherIcon = (condition: string) => {
+    switch (condition) {
+      case 'sunny':
+        return <Sun size={20} color="#FFA500" />;
+      case 'cloudy':
+        return <Cloud size={20} color="#87CEEB" />;
+      case 'rainy':
+        return <CloudRain size={20} color="#4682B4" />;
+      case 'partly_cloudy':
+        return <Cloud size={20} color="#87CEEB" />;
+      default:
+        return <Sun size={20} color="#FFA500" />;
+    }
+  };
+
+  const getConditionColor = (condition: string) => {
+    switch (condition) {
+      case 'sunny':
+        return '#FFA500';
+      case 'cloudy':
+        return '#87CEEB';
+      case 'rainy':
+        return '#4682B4';
+      case 'partly_cloudy':
+        return '#87CEEB';
+      default:
+        return colors.text;
+    }
+  };  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={[
+          styles.widgetContent, 
+          { 
+            backgroundColor: colors.cardBackground,
+            borderColor: colors.border,
+          }
+        ]}>
+          <Text style={[styles.loadingText, { color: colors.secondaryText }]}>
+            Loading weather...
+          </Text>
+        </View>
+      );
+    }
+
+    if (!weather) {
+      return null;
+    }
+
+    return (      <View 
+        style={[
+          styles.widgetContent, 
+          { 
+            backgroundColor: colors.cardBackground,
+            borderColor: isMoving ? colors.primary : colors.border,
+            opacity: isMoving ? 0.9 : 1,
+          }
+        ]}
+      >
+        <View style={styles.dragHandle} {...panResponder.panHandlers}>
+          <View style={styles.dragIcon}>
+            <Move size={18} color={isMoving ? colors.primary : colors.secondaryText} />
+          </View>
+          {showHint && (
+            <Text style={[styles.hintText, { color: colors.secondaryText }]}>
+              Drag to move
+            </Text>
+          )}
+        </View>
+        
+        <View style={styles.header}>
+          <View style={styles.mainInfo}>
+            {getWeatherIcon(weather.condition)}
+            <Text style={[styles.temperature, { color: colors.text }]}>
+              {weather.temperature}°C
+            </Text>
+          </View>
+          <Text style={[styles.condition, { color: getConditionColor(weather.condition) }]}>
+            {weather.condition.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          </Text>
+        </View>
+        
+        <View style={styles.details}>
+          <View style={styles.detailItem}>
+            <Droplets size={14} color={colors.secondaryText} />
+            <Text style={[styles.detailText, { color: colors.secondaryText }]}>
+              {weather.humidity}%
+            </Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Wind size={14} color={colors.secondaryText} />
+            <Text style={[styles.detailText, { color: colors.secondaryText }]}>
+              {weather.windSpeed} km/h
+            </Text>
+          </View>
+        </View>
+        
+        <Text style={[styles.recommendation, { color: colors.secondaryText }]} numberOfLines={2}>
+          {getWeatherRecommendation(weather)}
+        </Text>
+      </View>
+    );
+  };
+
+  if (!weather && !loading) {
+    return null;
+  }
+  // Create animated styles for the widget
+  const animatedStyles = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: positionX.value },
+        { translateY: positionY.value },
+      ],
+    };
+  });
+
+  return (
+    <Animated.View 
+      style={[styles.container, animatedStyles]}
+      onLayout={onLayout}
+    >
+      {renderContent()}
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    zIndex: 1000,
+    width: 280,
+  },
+  widgetContent: {
+    padding: 12,
+    borderRadius: 16,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 6,
+    borderWidth: 1,
+  },  dragHandle: {
+    alignItems: 'center',
+    paddingBottom: 8,
+    marginBottom: 4,
+  },
+  dragIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  hintText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 10,
+    marginTop: 4,
+    opacity: 0.8,
+  },
+  loadingText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  mainInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  temperature: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 20,
+    marginLeft: 6,
+  },
+  condition: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    textTransform: 'capitalize',
+  },
+  details: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 8,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  detailText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  recommendation: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+});

@@ -37,17 +37,36 @@ export function ScooterMarker({ scooter, onPress }: ScooterMarkerProps) {
         longitude: scooter.longitude,
       }}
       onPress={onPress}
+      tracksViewChanges={false}
     >
       <View style={styles.markerContainer}>
-        <View style={[styles.markerTop, { backgroundColor: colors.cardBackground }]}>
-          <Battery size={12} color={getBatteryColor(scooter.batteryLevel)} />
+        <View style={[
+          styles.markerTop, 
+          { 
+            backgroundColor: colors.cardBackground,
+            borderColor: colors.primary,
+          }
+        ]}>
+          <Battery size={14} color={getBatteryColor(scooter.batteryLevel)} />
           <Text style={[styles.batteryText, { color: colors.text }]}>{scooter.batteryLevel}%</Text>
         </View>
         <View style={styles.markerPin}>
-          <View style={[styles.circle, { backgroundColor: colors.cardBackground }]}>
-            <Text style={styles.price}>${scooter.pricePerMinute}</Text>
+          <View style={[
+            styles.circle, 
+            { 
+              backgroundColor: colors.primary,
+              borderColor: colors.cardBackground,  
+            }
+          ]}>
+            <Text style={[styles.price, { color: colors.cardBackground }]}>${scooter.pricePerMinute}</Text>
           </View>
-          <View style={[styles.pointer, { backgroundColor: colors.cardBackground }]} />
+          <View style={[
+            styles.pointer, 
+            { 
+              backgroundColor: colors.primary,
+              borderColor: colors.cardBackground, 
+            }
+          ]} />
         </View>
       </View>
     </Marker>
