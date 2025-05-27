@@ -119,20 +119,19 @@ export default function NotificationsScreen() {
       ]
     );
   };
-
   const getNotificationIcon = (type: string) => {
+    // The function returns JSX elements which are properly handled in React Native
     switch (type) {
       case 'ride':
         return <Car size={20} color={colors.primary} />;
       case 'promotion':
-        return <Gift size={20} color={colors.accent} />;
+        return <Gift size={20} color={colors.accent || '#8B5CF6'} />;
       case 'maintenance':
         return <Wrench size={20} color={colors.warning || '#F59E0B'} />;
       default:
         return <Bell size={20} color={colors.secondaryText} />;
     }
   };
-
   const formatTime = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -140,6 +139,7 @@ export default function NotificationsScreen() {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
+    // Return string values that will be used within <Text> components
     if (minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;

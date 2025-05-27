@@ -18,7 +18,8 @@ import {
   Type, 
   ChevronRight, 
   Trash2,
-  ArrowLeft
+  ArrowLeft,
+  CloudSun
 } from 'lucide-react-native';
 import { 
   getUserPreferences, 
